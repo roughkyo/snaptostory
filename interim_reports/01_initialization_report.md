@@ -6,8 +6,8 @@
 ## 2. 수행 내용
 - **폴더 구조 생성**: `user_global` 규칙에 따라 `primary_data`, `secondary_data`, `intermediate_results`, `visualizations`, `interim_reports`, `scripts` 폴더를 생성하였습니다.
 - **Git 초기화**: 로컬 저장소에서 `git init`을 실행하였습니다.
-- **README.md 작성**: 프로젝트 개요를 담은 한글 README 파일을 생성하였습니다.
+- **README.md 작성**: 프로젝트 개요와 GitHub URL을 포함한 한글 README 파일을 생성하였습니다.
+- **GitHub 원격 저장소 연결**: `https://github.com/roughkyo/snaptostory.git`을 origin으로 설정하고 첫 커밋을 push 완료하였습니다.
 
 ## 3. 향후 계획
-- 사용자가 제공하는 깃허브 저장소 URL을 바탕으로 원격 저장소 연결 (`git remote add origin ...`)
-- 초기 코드 커밋 및 푸시
+- 프로젝트의 구체적인 요구사항 정의 및 데이터 수집 계획 수립

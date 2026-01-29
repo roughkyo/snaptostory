@@ -9,3 +9,8 @@
 - `visualizations`: 시각화 이미지
 - `interim_reports`: 중간 보고서
 - `scripts`: 분석 스크립트
+
+## GitHub 저장소
+- [snaptostory](https://github.com/roughkyo/snaptostory)
+
+made by yangphago with antigravity
