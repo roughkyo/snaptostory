@@ -22,7 +22,7 @@ export default function Generator() {
                     initial={{ opacity: 0, scale: 0.98 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="glass-effect rounded-3xl shadow-[0_32px_64px_-16px_rgba(96,30,249,0.15)] p-8 md:p-12"
+                    className="glass-card rounded-4xl p-8 md:p-14"
                 >
                     <div className="space-y-10">
                         {/* Wide Text Input Area */}
@@ -71,8 +71,8 @@ export default function Generator() {
                                             key={s.id}
                                             onClick={() => setStyle(s.id)}
                                             className={`flex-1 py-3 px-3 rounded-lg text-sm font-bold transition-all ${style === s.id
-                                                    ? "bg-white text-primary shadow-sm"
-                                                    : "text-gray-400 hover:text-gray-600"
+                                                ? "bg-white text-primary shadow-sm"
+                                                : "text-gray-400 hover:text-gray-600"
                                                 }`}
                                         >
                                             {s.label}
