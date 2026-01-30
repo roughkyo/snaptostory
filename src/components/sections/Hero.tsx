@@ -16,7 +16,7 @@ export default function Hero() {
                         <h1 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter">
                             스냅투스토리
                         </h1>
-                        <span className="absolute -top-4 -right-12 md:-right-16 bg-emerald-500 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full shadow-lg transform rotate-[30deg] border-2 border-white">
+                        <span className="absolute -top-4 -right-12 md:-right-16 bg-primary-gradient text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full shadow-xl transform rotate-[30deg] border-2 border-white">
                             AI
                         </span>
                     </motion.div>
@@ -35,8 +35,8 @@ export default function Hero() {
 
             {/* Background decoration */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
-                <div className="absolute top-20 left-1/4 w-72 h-72 bg-emerald-200/30 rounded-full blur-3xl opacity-60 animate-pulse"></div>
-                <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-gray-200/40 rounded-full blur-3xl opacity-60"></div>
+                <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl opacity-60 animate-pulse"></div>
+                <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl opacity-60"></div>
             </div>
         </section>
     );

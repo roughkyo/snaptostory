@@ -22,7 +22,7 @@ export default function Gallery() {
     const filteredItems = MOCK_ITEMS.filter((item) => item.style === activeTab);
 
     return (
-        <section id="gallery" className="py-24 bg-gray-50/50">
+        <section id="gallery" className="py-24 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-6">
@@ -36,8 +36,8 @@ export default function Gallery() {
                                 key={cat.id}
                                 onClick={() => setActiveTab(cat.id)}
                                 className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${activeTab === cat.id
-                                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
-                                        : "bg-white text-gray-400 border border-gray-100 hover:border-emerald-200 hover:text-emerald-500"
+                                        ? "bg-primary-gradient text-white shadow-lg shadow-primary/20"
+                                        : "bg-gray-50 text-gray-400 border border-gray-100 hover:border-primary/20 hover:text-primary"
                                     }`}
                             >
                                 {cat.label}
@@ -58,13 +58,13 @@ export default function Gallery() {
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
                                     <div className="absolute top-4 left-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                        <CheckCircle2 className="w-4 h-4 text-primary" />
                                         AI 선별 원본
                                     </div>
                                 </div>
                                 <div className="mt-6 p-2">
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">프롬프트 예시</h3>
-                                    <p className="text-gray-500 leading-relaxed italic border-l-4 border-emerald-500 pl-4">
+                                    <p className="text-gray-500 leading-relaxed italic border-l-4 border-primary pl-4">
                                         "제주도 푸른 바다를 배경으로 한 평화로운 오후의 감각적인 에세이 스타일"
                                     </p>
                                 </div>
@@ -75,7 +75,7 @@ export default function Gallery() {
                     {/* Results Grid (Right) */}
                     <div className="lg:col-span-7">
                         <div className="flex items-center gap-2 mb-6">
-                            <Wand2 className="w-5 h-5 text-emerald-500" />
+                            <Wand2 className="w-5 h-5 text-primary" />
                             <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">AI 보정 및 스토리 결과물</span>
                         </div>
 
@@ -89,7 +89,7 @@ export default function Gallery() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.9 }}
                                         transition={{ duration: 0.3, delay: idx * 0.05 }}
-                                        className="aspect-square bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all group cursor-pointer"
+                                        className="aspect-square bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl hover:border-primary/20 transition-all group cursor-pointer"
                                     >
                                         <img
                                             src={item.url}
