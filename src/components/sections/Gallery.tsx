@@ -22,7 +22,7 @@ export default function Gallery() {
     const filteredItems = MOCK_ITEMS.filter((item) => item.style === activeTab);
 
     return (
-        <section id="gallery" className="py-24 bg-white">
+        <section id="gallery" className="py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-6">
@@ -36,8 +36,8 @@ export default function Gallery() {
                                 key={cat.id}
                                 onClick={() => setActiveTab(cat.id)}
                                 className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${activeTab === cat.id
-                                        ? "bg-primary-gradient text-white shadow-lg shadow-primary/20"
-                                        : "bg-gray-50 text-gray-400 border border-gray-100 hover:border-primary/20 hover:text-primary"
+                                    ? "bg-primary-gradient text-white shadow-lg shadow-primary/20"
+                                    : "bg-gray-50 text-gray-400 border border-gray-100 hover:border-primary/20 hover:text-primary"
                                     }`}
                             >
                                 {cat.label}
