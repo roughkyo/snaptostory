@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { selectBestImages, generateSnapToStory } from "@/lib/gemini";
+import { generateFullSnapStory } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,24 +27,75 @@ export async function POST(req: NextRequest) {
             })
         );
 
-        // 1단계: 베스트 이미지 선정
-        const bestResult = await selectBestImages(imageDatas);
-        const bestIndex = bestResult.bestIndexes[0] || 0;
-        const bestImageData = imageDatas[bestIndex];
+        // 통합 단계: 베스트 이미지 선정 + 스토리 생성
+        const fullStoryResult = await generateFullSnapStory(imageDatas, userPrompt, style);
 
-        // 2단계: 이미지 인핸싱 (Cloudinary)
-        // TODO: Cloudinary 업로드 및 인핸싱 로직 추가 예정
-        // 현재는 원본 base64를 그대로 사용하거나 모의 처리
-        let enhancedImageUrl = "";
+        // 인덱스 유효성 검사 및 범위 제한 (0 ~ images.length - 1)
+        const bestIndexes = (fullStoryResult.bestIndexes && Array.isArray(fullStoryResult.bestIndexes))
+            ? fullStoryResult.bestIndexes
+                .filter((idx: any) => typeof idx === 'number' && idx >= 0 && idx < imageDatas.length)
+                .slice(0, 2)
+            : [0, 1];
 
-        // 3단계: 스토리 생성
-        const story = await generateSnapToStory(bestImageData, userPrompt, style);
+        // 만약 필터링 후 2개가 안 된다면 기본값으로 채움
+        if (bestIndexes.length < 2) {
+            if (!bestIndexes.includes(0)) bestIndexes.push(0);
+            if (bestIndexes.length < 2 && !bestIndexes.includes(1)) bestIndexes.push(1);
+            if (bestIndexes.length < 2) bestIndexes.push(0); // 정 안되면 0번이라도 중복해서 채움 (에러 방지)
+        }
+
+        const selectionReason = fullStoryResult.reason || "특별한 순간이 담긴 두 장의 사진을 선정해봤어요.";
+        const story = fullStoryResult.story || "함께 나누는 소중한 시간들이 모여 오늘의 아름다운 기록이 되었습니다.";
+        const cleanStory = story.replace(/<br\s*\/?>/gi, '\n').trim();
+
+        // 2단계: 이미지 인핸싱 (선정된 2장 모두 수행)
+        const cloudinary = require("cloudinary").v2;
+        cloudinary.config({
+            cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        const bestImagesResults = await Promise.all(bestIndexes.map(async (idx: number) => {
+            const imageData = imageDatas[idx];
+            let enhancedUrl = "";
+
+            try {
+                const uploadResult = await new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload(`data:${imageData.inlineData.mimeType};base64,${imageData.inlineData.data}`,
+                        { folder: "snaptostory" },
+                        (error: any, result: any) => {
+                            if (error) reject(error);
+                            else resolve(result);
+                        });
+                }) as any;
+
+                const effectMap: Record<string, any[]> = {
+                    low: [{ effect: "enhance" }],
+                    mid: [{ effect: "improve" }],
+                    high: [{ effect: "improve" }, { effect: "vibrance:50" }, { effect: "sharpen:100" }]
+                };
+
+                const selectedEffects = effectMap[intensity] || effectMap.mid;
+
+                enhancedUrl = cloudinary.url(uploadResult.public_id, {
+                    transformation: [...selectedEffects],
+                    secure: true,
+                });
+            } catch (err) {
+                console.error("Cloudinary Individual Error:", err);
+            }
+
+            return {
+                preview: enhancedUrl || `data:${imageData.inlineData.mimeType};base64,${imageData.inlineData.data}`,
+                original: `data:${imageData.inlineData.mimeType};base64,${imageData.inlineData.data}`
+            };
+        }));
 
         return NextResponse.json({
-            bestIndex,
-            story,
-            // enhancedImageUrl: "...", 
-            originalPreview: `data:${bestImageData.inlineData.mimeType};base64,${bestImageData.inlineData.data}`
+            bestImages: bestImagesResults,
+            story: cleanStory,
+            reason: selectionReason
         });
 
     } catch (error: any) {

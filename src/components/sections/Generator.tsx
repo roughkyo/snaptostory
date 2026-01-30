@@ -46,7 +46,103 @@ export default function Generator() {
         });
     };
 
-    const [result, setResult] = useState<{ story: string; preview: string } | null>(null);
+    const [result, setResult] = useState<{ story: string; bestImages: { preview: string }[]; reason?: string } | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+
+    const compressImage = async (file: File): Promise<File> => {
+        // 10MB 이하인 경우 그대로 반환
+        if (file.size <= 10 * 1024 * 1024) return file;
+
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // 최대 가로/세로 2500px로 축소 (비율 유지)
+                    const MAX_SIZE = 2500;
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const newFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            resolve(newFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', 0.8); // 80% 품질로 압축
+                };
+            };
+        });
+    };
+
+    const handleFiles = async (selectedFiles: File[]) => {
+        if (images.length + selectedFiles.length > 10) {
+            setError("최대 10장까지만 업로드 가능합니다.");
+            return;
+        }
+
+        setIsLoading(true); // 압축 중 로딩 표시
+        try {
+            const processedImages = await Promise.all(
+                selectedFiles.map(async (file) => {
+                    const processedFile = await compressImage(file);
+                    return {
+                        file: processedFile,
+                        preview: URL.createObjectURL(processedFile)
+                    };
+                })
+            );
+
+            setImages(prev => [...prev, ...processedImages]);
+            setError(null);
+        } catch (err) {
+            setError("이미지 처리 중 오류가 발생했습니다.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleGenerate = async () => {
         if (images.length < 5) {
@@ -75,7 +171,8 @@ export default function Generator() {
             const data = await response.json();
             setResult({
                 story: data.story,
-                preview: data.originalPreview // Cloudinary 연동 전까지 베스트 원본 표시
+                bestImages: data.bestImages,
+                reason: data.reason
             });
 
             // 결과 섹션으로 스크롤
@@ -113,15 +210,20 @@ export default function Generator() {
 
                             <div
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`group relative border-2 border-dashed rounded-3xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] ${images.length === 0
-                                    ? "border-gray-200 hover:border-primary/50 bg-gray-50/50"
-                                    : "border-primary/20 bg-white"
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                className={`group relative border-2 border-dashed rounded-3xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] ${isDragging
+                                    ? "border-primary bg-primary/5 scale-[1.02]"
+                                    : images.length === 0
+                                        ? "border-gray-200 hover:border-primary/50 bg-gray-50/50"
+                                        : "border-primary/20 bg-white"
                                     }`}
                             >
                                 <input
                                     type="file"
                                     ref={fileInputRef}
-                                    onChange={handleImageChange}
+                                    onChange={(e) => handleFiles(Array.from(e.target.files || []))}
                                     multiple
                                     accept="image/*"
                                     className="hidden"
@@ -261,34 +363,74 @@ export default function Generator() {
                                 <p className="text-gray-500 font-bold">AI가 선정한 베스트 순간과 소중한 기록입니다.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                                <div className="glass-card rounded-4xl p-6 shadow-2xl overflow-hidden group">
-                                    <div className="aspect-[4/5] rounded-3xl overflow-hidden relative">
-                                        <img
-                                            src={result.preview}
-                                            alt="Best moment"
-                                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                                        />
-                                        <div className="absolute top-6 left-6 bg-primary-gradient text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
-                                            AI 베스트 피크
-                                        </div>
+                            <div className="flex flex-col gap-12">
+                                {/* Images Area (Top Horizontal Layout) */}
+                                <div className="space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {result.bestImages.map((img, idx) => (
+                                            <div key={idx} className="glass-card rounded-4xl p-4 shadow-2xl overflow-hidden group h-fit">
+                                                <div className="rounded-3xl overflow-hidden relative">
+                                                    <img
+                                                        src={img.preview}
+                                                        alt={`Best moment ${idx + 1}`}
+                                                        className="w-full h-auto transition-transform duration-1000 group-hover:scale-105"
+                                                    />
+                                                    <div className="absolute top-6 left-6">
+                                                        <div className="bg-primary-gradient text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
+                                                            BEST 픽 {idx + 1}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+
+                                    {/* AI 선정 이유 */}
+                                    {result.reason && (
+                                        <div className="max-w-3xl mx-auto p-8 rounded-3xl bg-primary/5 border border-primary/10 shadow-sm">
+                                            <p className="text-gray-700 text-xl font-bold leading-relaxed text-center">
+                                                <span className="text-primary block mb-2">✨ AI 선정 이유</span> {result.reason}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="space-y-8 p-6">
-                                    <div className="relative">
-                                        <span className="text-6xl text-primary/10 font-serif absolute -top-10 -left-6">“</span>
-                                        <p className="text-2xl md:text-3xl font-black text-gray-800 leading-tight md:leading-snug">
-                                            {result.story}
+                                {/* Story & Action Area (Bottom) */}
+                                <div className="max-w-3xl mx-auto w-full space-y-12">
+                                    <div className="relative px-8 pt-4">
+                                        <span className="text-6xl text-primary/10 font-serif absolute -top-4 -left-2">“</span>
+                                        <p className="text-xl md:text-2xl font-bold text-gray-800 leading-relaxed whitespace-pre-wrap text-center">
+                                            {result.story?.replace(/<br\s*\/?>/gi, '\n') || ""}
                                         </p>
-                                        <span className="text-6xl text-primary/10 font-serif absolute -bottom-16 -right-6">”</span>
+                                        <span className="text-6xl text-primary/10 font-serif absolute -bottom-8 -right-2">”</span>
                                     </div>
 
                                     <div className="pt-10 border-t border-gray-100 flex flex-wrap gap-4">
-                                        <button className="flex-1 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all">
-                                            이미지 저장하기
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    for (let i = 0; i < result.bestImages.length; i++) {
+                                                        const response = await fetch(result.bestImages[i].preview);
+                                                        const blob = await response.blob();
+                                                        const url = window.URL.createObjectURL(blob);
+                                                        const link = document.createElement('a');
+                                                        link.href = url;
+                                                        link.download = `snaptostory-${Date.now()}-${i + 1}.jpg`;
+                                                        document.body.appendChild(link);
+                                                        link.click();
+                                                        document.body.removeChild(link);
+                                                        window.URL.revokeObjectURL(url);
+                                                        await new Promise(r => setTimeout(r, 400));
+                                                    }
+                                                } catch (err) {
+                                                    alert("이미지 저장 중 오류가 발생했습니다.");
+                                                }
+                                            }}
+                                            className="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-black text-lg hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl"
+                                        >
+                                            전체 이미지 소장하기
                                         </button>
-                                        <button className="flex-1 py-4 border-2 border-primary/20 text-primary rounded-2xl font-bold hover:bg-primary/5 transition-all">
+                                        <button className="flex-1 py-5 border-2 border-primary/20 text-primary rounded-2xl font-black text-lg hover:bg-primary/5 transition-all shadow-sm">
                                             SNS 공유하기
                                         </button>
                                     </div>
