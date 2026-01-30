@@ -10,11 +10,14 @@ const CATEGORIES = [
     { id: "sns", label: "SNS 업로드용" },
 ];
 
-const MOCK_ITEMS = Array.from({ length: 9 }).map((_, i) => ({
-    id: i,
-    url: `https://picsum.photos/seed/${i + 10}/400/400`,
-    style: CATEGORIES[i % 3].id,
-}));
+const MOCK_ITEMS = [
+    { id: 1, url: "/samples/2.webp", style: "essay" },
+    { id: 2, url: "/samples/3.webp", style: "essay" },
+    { id: 3, url: "/samples/4.webp", style: "essay" },
+    { id: 4, url: "/samples/2.webp", style: "news" },
+    { id: 5, url: "/samples/3.webp", style: "news" },
+    { id: 6, url: "/samples/4.webp", style: "sns" },
+];
 
 export default function Gallery() {
     const [activeTab, setActiveTab] = useState("essay");
@@ -53,7 +56,7 @@ export default function Gallery() {
                             <div className="relative group overflow-hidden rounded-3xl bg-white p-4 shadow-xl border border-gray-100">
                                 <div className="aspect-square relative rounded-2xl overflow-hidden bg-gray-100">
                                     <img
-                                        src="https://picsum.photos/seed/main/1000/1000"
+                                        src="/samples/1.webp"
                                         alt="Original"
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
